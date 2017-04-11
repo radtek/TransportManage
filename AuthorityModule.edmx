@@ -1,0 +1,240 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+      <Schema xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl" Namespace="AuthorityModule.Store" Alias="Self" Provider="System.Data.SqlClient" ProviderManifestToken="2005">
+        <EntityContainer Name="AuthorityModuleTargetContainer" >
+        </EntityContainer>
+      </Schema>
+    </edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema xmlns="http://schemas.microsoft.com/ado/2009/11/edm" xmlns:cg="http://schemas.microsoft.com/ado/2006/04/codegeneration" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" Namespace="AuthorityModule" Alias="Self" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" annotation:UseStrongSpatialTypes="false">
+        <EntityContainer Name="AuthorityModuleContainer" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="Employee" EntityType="AuthorityModule.Employee" />
+          <EntitySet Name="Department" EntityType="AuthorityModule.Group" />
+          <EntitySet Name="ModuleAuthorizationSet" EntityType="AuthorityModule.ModuleAuthorization" />
+          <EntitySet Name="ResourceAuthorizationSet" EntityType="AuthorityModule.ResourceAuthorization" />
+          <EntitySet Name="Employee_GroupSet" EntityType="AuthorityModule.Employee_Group" />
+          <AssociationSet Name="EmployeeEmployee_Group" Association="AuthorityModule.EmployeeEmployee_Group">
+            <End Role="Employee" EntitySet="Employee" />
+            <End Role="Employee_Group" EntitySet="Employee_GroupSet" />
+          </AssociationSet>
+          <AssociationSet Name="GroupEmployee_Group" Association="AuthorityModule.GroupEmployee_Group">
+            <End Role="Group" EntitySet="Department" />
+            <End Role="Employee_Group" EntitySet="Employee_GroupSet" />
+          </AssociationSet>
+          <AssociationSet Name="GroupModuleAuthorization" Association="AuthorityModule.GroupModuleAuthorization">
+            <End Role="Group" EntitySet="Department" />
+            <End Role="ModuleAuthorization" EntitySet="ModuleAuthorizationSet" />
+          </AssociationSet>
+          <AssociationSet Name="GroupResourceAuthorization" Association="AuthorityModule.GroupResourceAuthorization">
+            <End Role="Group" EntitySet="Department" />
+            <End Role="ResourceAuthorization" EntitySet="ResourceAuthorizationSet" />
+          </AssociationSet>
+          <EntitySet Name="CheckTask" EntityType="AuthorityModule.CheckTask" />
+          <EntitySet Name="Flow" EntityType="AuthorityModule.Flow" />
+          <EntitySet Name="FlowGroupDetailSet" EntityType="AuthorityModule.FlowGroupDetail" />
+          <AssociationSet Name="FlowFlowGroupDetail" Association="AuthorityModule.FlowFlowGroupDetail">
+            <End Role="Flow" EntitySet="Flow" />
+            <End Role="FlowGroupDetail" EntitySet="FlowGroupDetailSet" />
+          </AssociationSet>
+          <AssociationSet Name="GroupFlowGroupDetail" Association="AuthorityModule.GroupFlowGroupDetail">
+            <End Role="Group" EntitySet="Department" />
+            <End Role="FlowGroupDetail" EntitySet="FlowGroupDetailSet" />
+          </AssociationSet>
+          <AssociationSet Name="FlowCheckTask" Association="AuthorityModule.FlowCheckTask">
+            <End Role="Flow" EntitySet="Flow" />
+            <End Role="CheckTask" EntitySet="CheckTask" />
+          </AssociationSet>
+        </EntityContainer>
+        <EntityType Name="Employee">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Name" Type="String" Nullable="false" />
+          <NavigationProperty Name="Employee_Group" Relationship="AuthorityModule.EmployeeEmployee_Group" FromRole="Employee" ToRole="Employee_Group" />
+        </EntityType>
+        <EntityType Name="Group">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Name" Type="String" Nullable="false" />
+          <Property Name="Type" Type="String" Nullable="false" />
+          <NavigationProperty Name="Employee_Group" Relationship="AuthorityModule.GroupEmployee_Group" FromRole="Group" ToRole="Employee_Group" />
+          <NavigationProperty Name="ModuleAuthorization" Relationship="AuthorityModule.GroupModuleAuthorization" FromRole="Group" ToRole="ModuleAuthorization" />
+          <NavigationProperty Name="ResourceAuthorization" Relationship="AuthorityModule.GroupResourceAuthorization" FromRole="Group" ToRole="ResourceAuthorization" />
+          <NavigationProperty Name="FlowGroupDetail" Relationship="AuthorityModule.GroupFlowGroupDetail" FromRole="Group" ToRole="FlowGroupDetail" />
+        </EntityType>
+        <EntityType Name="ModuleAuthorization">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="GroupId" Type="String" Nullable="false" />
+          <Property Name="ModuleId" Type="String" Nullable="false" />
+          <NavigationProperty Name="Group" Relationship="AuthorityModule.GroupModuleAuthorization" FromRole="ModuleAuthorization" ToRole="Group" />
+        </EntityType>
+        <EntityType Name="ResourceAuthorization">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <NavigationProperty Name="NavigationProperty1" />
+          <Property Name="GroupId" Type="String" Nullable="false" />
+          <Property Name="SiteId" Type="String" Nullable="false" />
+          <NavigationProperty Name="Group" Relationship="AuthorityModule.GroupResourceAuthorization" FromRole="ResourceAuthorization" ToRole="Group" />
+          <Property Name="SiteType" Type="String" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Employee_Group">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <NavigationProperty Name="NavigationProperty1" />
+          <Property Name="GroupId" Type="String" Nullable="false" />
+          <Property Name="EmployeeId" Type="String" Nullable="false" />
+          <NavigationProperty Name="Employee" Relationship="AuthorityModule.EmployeeEmployee_Group" FromRole="Employee_Group" ToRole="Employee" />
+          <NavigationProperty Name="Group" Relationship="AuthorityModule.GroupEmployee_Group" FromRole="Employee_Group" ToRole="Group" />
+        </EntityType>
+        <Association Name="EmployeeEmployee_Group">
+          <End Type="AuthorityModule.Employee" Role="Employee" Multiplicity="1" />
+          <End Type="AuthorityModule.Employee_Group" Role="Employee_Group" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Employee">
+              <PropertyRef Name="Id" />
+            </Principal>
+            <Dependent Role="Employee_Group">
+              <PropertyRef Name="EmployeeId1" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="GroupEmployee_Group">
+          <End Type="AuthorityModule.Group" Role="Group" Multiplicity="1" />
+          <End Type="AuthorityModule.Employee_Group" Role="Employee_Group" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Group">
+              <PropertyRef Name="Id" />
+            </Principal>
+            <Dependent Role="Employee_Group">
+              <PropertyRef Name="GroupId1" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="GroupModuleAuthorization">
+          <End Type="AuthorityModule.Group" Role="Group" Multiplicity="1" />
+          <End Type="AuthorityModule.ModuleAuthorization" Role="ModuleAuthorization" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Group">
+              <PropertyRef Name="Id" />
+            </Principal>
+            <Dependent Role="ModuleAuthorization">
+              <PropertyRef Name="GroupId1" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="GroupResourceAuthorization">
+          <End Type="AuthorityModule.Group" Role="Group" Multiplicity="1" />
+          <End Type="AuthorityModule.ResourceAuthorization" Role="ResourceAuthorization" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Group">
+              <PropertyRef Name="Id" />
+            </Principal>
+            <Dependent Role="ResourceAuthorization">
+              <PropertyRef Name="GroupId1" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityType Name="CheckTask">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="TaskId" Type="String" Nullable="false" />
+          <NavigationProperty Name="Flow" Relationship="AuthorityModule.FlowCheckTask" FromRole="CheckTask" ToRole="Flow" />
+          <Property Name="FlowId" Type="String" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Flow">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Name" Type="String" Nullable="false" />
+          <NavigationProperty Name="FlowGroupDetail" Relationship="AuthorityModule.FlowFlowGroupDetail" FromRole="Flow" ToRole="FlowGroupDetail" />
+          <Property Name="FlowType" Type="String" Nullable="false" />
+          <NavigationProperty Name="CheckTask" Relationship="AuthorityModule.FlowCheckTask" FromRole="Flow" ToRole="CheckTask" />
+          <Property Name="FlowNumber" Type="String" Nullable="false" />
+        </EntityType>
+        <EntityType Name="FlowGroupDetail">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="FlowId" Type="String" Nullable="false" />
+          <Property Name="GroupId" Nullable="false" Type="String" />
+          <NavigationProperty Name="Flow" Relationship="AuthorityModule.FlowFlowGroupDetail" FromRole="FlowGroupDetail" ToRole="Flow" />
+          <NavigationProperty Name="Group" Relationship="AuthorityModule.GroupFlowGroupDetail" FromRole="FlowGroupDetail" ToRole="Group" />
+        </EntityType>
+        <Association Name="FlowFlowGroupDetail">
+          <End Type="AuthorityModule.Flow" Role="Flow" Multiplicity="1" />
+          <End Type="AuthorityModule.FlowGroupDetail" Role="FlowGroupDetail" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Flow">
+              <PropertyRef Name="Id" />
+            </Principal>
+            <Dependent Role="FlowGroupDetail">
+              <PropertyRef Name="FlowId1" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="GroupFlowGroupDetail">
+          <End Type="AuthorityModule.Group" Role="Group" Multiplicity="1" />
+          <End Type="AuthorityModule.FlowGroupDetail" Role="FlowGroupDetail" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Group">
+              <PropertyRef Name="Id" />
+            </Principal>
+            <Dependent Role="FlowGroupDetail">
+              <PropertyRef Name="GroupId1" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FlowCheckTask">
+          <End Type="AuthorityModule.Flow" Role="Flow" Multiplicity="1" />
+          <End Type="AuthorityModule.CheckTask" Role="CheckTask" Multiplicity="1" />
+        </Association>
+      </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs" Space="C-S">
+        <Alias Key="Model" Value="AuthorityModule" />
+        <Alias Key="Target" Value="AuthorityModule.Store" />
+        <EntityContainerMapping CdmEntityContainer="AuthorityModuleContainer" StorageEntityContainer="AuthorityModuleTargetContainer">
+        </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <edmx:Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </edmx:Connection>
+    <edmx:Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="False" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="无" />
+      </DesignerInfoPropertySet>
+    </edmx:Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>

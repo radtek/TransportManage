@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+ <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+      <Diagram DiagramId="7bdbe5f158274bc384ca4f76afaded27" Name="Diagram1" ZoomLevel="86" >
+        <EntityTypeShape EntityType="AuthorityModule.Employee" Width="1.5" PointX="9.75" PointY="7" />
+        <EntityTypeShape EntityType="AuthorityModule.Group" Width="1.5" PointX="6.375" PointY="3.125" />
+        <EntityTypeShape EntityType="AuthorityModule.ModuleAuthorization" Width="1.5" PointX="4.25" PointY="0.875" />
+        <EntityTypeShape EntityType="AuthorityModule.ResourceAuthorization" Width="1.5" PointX="7.625" PointY="0.625" />
+        <EntityTypeShape EntityType="AuthorityModule.Employee_Group" Width="1.5" PointX="7" PointY="6" />
+        <AssociationConnector Association="AuthorityModule.EmployeeEmployee_Group" />
+        <AssociationConnector Association="AuthorityModule.GroupEmployee_Group" />
+        <AssociationConnector Association="AuthorityModule.GroupModuleAuthorization" />
+        <AssociationConnector Association="AuthorityModule.GroupResourceAuthorization" />
+        <EntityTypeShape EntityType="AuthorityModule.CheckTask" Width="1.5" PointX="0.625" PointY="6" />
+        <EntityTypeShape EntityType="AuthorityModule.Flow" Width="1.5" PointX="0.5" PointY="2.625" />
+        <EntityTypeShape EntityType="AuthorityModule.FlowGroupDetail" Width="2" PointX="3.25" PointY="3.25" FillColor="Silver" />
+        <AssociationConnector Association="AuthorityModule.FlowFlowGroupDetail" />
+        <AssociationConnector Association="AuthorityModule.GroupFlowGroupDetail" />
+        <AssociationConnector Association="AuthorityModule.FlowCheckTask" />
+      </Diagram>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>
