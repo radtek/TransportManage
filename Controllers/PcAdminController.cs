@@ -926,7 +926,7 @@ namespace TransportManage.Controllers
         {
             using (var c = AppDb.CreateConnection(AppDb.TransportManager))
             {
-
+                data.TaskStatus = data.TaskStatus == 2 ? c.SelectScalar<int>(Sql.GetDumpCheckNumber, new { }) : c.SelectScalar<int>(Sql.GetCheckedFlowMaxNumber, new { });
                 var companyId = Convert.ToInt32(Request.Properties["CompanyId"]);
                 var r = MethodHelp.FuzzySearching(c, data, companyId);
                 return r.ConvertAll(d => new StatisticsDetailData()

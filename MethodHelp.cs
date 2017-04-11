@@ -18,7 +18,7 @@ namespace TransportManage
 
             using (var c = AppDb.CreateConnection(AppDb.TransportManager))
             {
-                var r = c.SelectScalar<string>(Sql.VerifyIsFinsh, new { taskId }) == null ?false : true;
+                var r = c.SelectScalar<string>(Sql.VerifyIsFinsh, new { taskId }) == null ? false : true;
                 if (r)
                 {
                     throw new Exception("任务已经审核完成");
@@ -352,7 +352,7 @@ namespace TransportManage
             data.PlateNumber = "%" + data.PlateNumber + "%";
             var ss = data.StartTime ?? new DateTime(2000, 1, 1);
             var ee = (data.EndTime ?? System.DateTime.Now).Date.AddDays(1).AddSeconds(-1);
-            var r = c.Select<StatisticsController.StatisticsDetail>(Sql.GetShortcutDetailSql, new { StartTime = data.StartTime ?? Convert.ToDateTime("2000/1/1"), data.PlateNumber, EndTime = (data.EndTime ?? System.DateTime.Now).Date.AddDays(1).AddSeconds(-1), data.DriverName, data.Dump, data.Worksite, data.TaskStatus, CompanyId = companyId });
+            var r = c.Select<StatisticsController.StatisticsDetail>(Sql.GetShortcutDetailSql, new { StartTime = data.StartTime ?? Convert.ToDateTime("2000/1/1"), data.PlateNumber, EndTime = (data.EndTime ?? System.DateTime.Now).Date.AddDays(1).AddSeconds(-1), data.DriverName, data.Dump, data.Worksite, flowNumber = data.TaskStatus, CompanyId = companyId });
 
             //MethodHelp.GetCompleteTaskDetail(r, 100, 100, c);
             var temp = r.Where(d =>
@@ -461,6 +461,7 @@ namespace TransportManage
         /// <returns></returns>
         internal static List<TaskInfo> GetOrderTask(SqlConnection c, int companyId, int employeeId = 0, List<int> worksiteIdList = null, List<int> taskId = null)
         {
+            var DumpCheckedNumber = c.SelectScalar<int>(Sql.GetDumpCheckNumber, new { });
             var maxNumber = c.SelectScalar<int>(Sql.GetCheckedFlowMaxNumber, new { });
             IList<TaskInfo> d;
             if (companyId == 0)
@@ -471,18 +472,18 @@ namespace TransportManage
             {
                 //司机个人详情
 
-                d = c.Select<TaskInfo>(Sql.GetDriverFinishOrder2.Replace("/*condition*/", @" OR f.FlowNumber=@conditionStatus"), new { DriverId = employeeId, flowNumber = 2, conditionStatus = maxNumber, companyId });
+                d = c.Select<TaskInfo>(Sql.GetDriverFinishOrder2.Replace("/*condition*/", @" OR f.FlowNumber=@conditionStatus"), new { DriverId = employeeId, flowNumber = DumpCheckedNumber, conditionStatus = maxNumber, companyId });
             }
 
             else if (employeeId != 0 & worksiteIdList != null)
             {
                 //工地管理员详情
-                d = c.Select<TaskInfo>(Sql.GetFinishOrder2.Replace("/*condition*/", @"OR f.FlowNumber=@conditionStatus").Replace("/*andCondition*/", @" AND od.WorkSiteId IN (@worksiteId)"), new { CompanyId = companyId, FlowNumber = 0, conditionStatus =maxNumber, Operater = employeeId, worksiteId = worksiteIdList });
+                d = c.Select<TaskInfo>(Sql.GetFinishOrder2.Replace("/*condition*/", @"OR f.FlowNumber=@conditionStatus").Replace("/*andCondition*/", @" AND od.WorkSiteId IN (@worksiteId)"), new { CompanyId = companyId, FlowNumber = DumpCheckedNumber, conditionStatus = maxNumber, Operater = employeeId, worksiteId = worksiteIdList });
             }
             else
             {
                 //公司详情
-                d = c.Select<TaskInfo>(Sql.GetFinishOrder2, new { CompanyId = companyId, FlowNumber= 0 });
+                d = c.Select<TaskInfo>(Sql.GetFinishOrder2, new { CompanyId = companyId, FlowNumber = DumpCheckedNumber });
             }
             if (taskId != null)
             {

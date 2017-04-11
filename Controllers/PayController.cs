@@ -28,8 +28,9 @@ namespace TransportManage.Controllers
         /// <param name="vehiclePlateNumber"></param>
         /// <returns></returns>
         [HttpGet, Route("GetDriverTask")]
-        public object GetDriverTask(string name, DateTime? startTime, DateTime? endTime, string workSite, string dump, string token, string vehiclePlateNumber, int taskstatus = 4)
+        public object GetDriverTask(string name, DateTime? startTime, DateTime? endTime, string workSite, string dump, string token, string vehiclePlateNumber, int taskstatus = 0)
         {
+
             var userInfo = new UserInfoData(Request);
             if (!userInfo.IsBoss)
             {
@@ -37,6 +38,7 @@ namespace TransportManage.Controllers
             }
             using (var c = AppDb.CreateConnection(AppDb.TransportManager))
             {
+                taskstatus = c.SelectScalar<int>(Sql.GetCheckedFlowMaxNumber, new { });
                 var companyId = Convert.ToInt32(Request.Properties["CompanyId"]);
                 var r = (List<StatisticsDetail>)MethodHelp.FuzzySearching(c, new ShortcutData
                 {
@@ -51,6 +53,7 @@ namespace TransportManage.Controllers
                 //去除已经生成订单的TaskId
                 var isPayTaskId = c.Select<int>(Sql.GetIsPayTaskIdSql);
                 r = r.Where(d => !isPayTaskId.Contains(d.TaskId)).ToList();
+
                 return ApiResult.Create(true, r.ConvertAll(d => new { d.Driver, TaskId = d.TaskId, Time = d.UnloadTime, d.TaskNumber, WorkSite = d.Name, d.SoilType, d.Dump, d.PlateNumber, d.DriverPrice }));
             }
         }

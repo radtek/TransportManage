@@ -40,7 +40,7 @@ namespace TransportManage.Controllers
             {
                 //以下是分配组权限
                 var auth = type.ToString();
-                var t = c.Update(Sql.AuthSql, new { CompanyId = Convert.ToInt32(Request.Properties["CompanyId"]), Name = Convert.ToBoolean((int)type & 1) ? auth + "组" : data.Data.Name + "组", type = auth }, data.EmployeeId.ConvertAll(d => new { EmployeeId = d }));
+                var t = c.Update(Sql.AuthSql, new { CompanyId = Convert.ToInt32(Request.Properties["CompanyId"]), Name = Convert.ToBoolean((int)type & 1) ? auth + "组" : data.Data.Name + "组", type = Convert.ToBoolean((int)type & 1) ? auth + "权限" : auth + "资源" }, data.EmployeeId.ConvertAll(d => new { EmployeeId = d }));
                 if (t == 0)
                 {
                     return ApiResult.Create(false, "新增权限失败");

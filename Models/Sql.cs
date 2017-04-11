@@ -3,6 +3,17 @@
 
     public static class Sql
     {
+        public const string GetCompanyTaskCount = @"SELECT
+	COUNT(*)
+FROM TransportManage..DeliveryTask d
+WHERE d.TaskStatus = 2";
+
+        public const string GetDumpCheckNumber = @"SELECT
+	f.FlowNumber
+FROM TransportManage..CheckedTask ct
+INNER JOIN TransportManage..Flow f
+	ON f.FlowNumber = ct.FlowNumber
+WHERE f.Name = '消纳审核'";
         public const string GetCheckedFlowMaxNumber = @"SELECT TOP 1
 	f.FlowNumber
 FROM TransportManage..Flow f
@@ -302,15 +313,19 @@ IF exists (SELECT
 	*
 FROM TransportManage..Department d
 WHERE d.Name = @Name AND d.CompanyId = @CompanyId)
+begin
 SET @GroupId = (SELECT
 	de.Id
 FROM TransportManage..Department de
 WHERE de.Name = @Name AND de.CompanyId = @CompanyId)
+end
 else
+begin
 INSERT TransportManage..Department (Name, CompanyId, Type)
 	VALUES (@Name, @CompanyId, @Type);
 SET @GroupId = (SELECT
 	CAST(SCOPE_IDENTITY() AS int));
+end
 INSERT TransportManage..EmployeeCorelation (DepartmentId, EmployeeId)
 	VALUES (@GroupId, @EmployeeId)";
         public const string FinanceAuthSql = @"";
@@ -412,16 +427,16 @@ INSERT @Temp
 			WHEN @MaxNumber THEN ec.Cost
 		END) AS ExtraCost,
 		COUNT(CASE f.FlowNumber
-			WHEN 0 THEN v.TaskId
+			WHEN @DumpCheckedNumber THEN v.TaskId
 		END) AS TaskSum2,
 		SUM(CASE f.FlowNumber
-			WHEN 0 THEN od.WorkPrice
+			WHEN @DumpCheckedNumber THEN od.WorkPrice
 		END) AS WorkPrice2,
-				SUM(CASE v.TaskStatus
-			WHEN 0 THEN od.DriverPrice
+				SUM(CASE f.FlowNumber
+			WHEN @DumpCheckedNumber THEN od.DriverPrice
 		END) AS DriverPrice2,
 		SUM(CASE f.FlowNumber
-			WHEN 0 THEN ec.Cost
+			WHEN @DumpCheckedNumber THEN ec.Cost
 		END) AS ExtraCost2
 	FROM TransportManage.dbo.DeliveryTaskView v
 	INNER JOIN TransportManage..OrderDetail od
@@ -436,7 +451,7 @@ INSERT @Temp
 		ON ct.TaskId = v.TaskId
 	INNER JOIN TransportManage..Flow f
 		ON f.FlowNumber = ct.FlowNumber
-	WHERE (f.Name = '完成运输' OR f.Name = '完成审核') /* condition */
+	WHERE (f.Name = '消纳审核' OR f.Name = '完成审核') /* condition */
 	GROUP BY	od.WorkSiteId,
 				w.Name
 
@@ -459,13 +474,13 @@ SELECT
 		WHEN @MaxNumber THEN ec.Cost
 	END) AS ExtraCost,
 	COUNT(CASE f.FlowNumber
-		WHEN 0 THEN v.TaskId
+		WHEN @DumpCheckedNumber THEN v.TaskId
 	END) AS TaskCount2,
 	SUM(CASE f.FlowNumber
-		WHEN 0 THEN od.DriverPrice
+		WHEN @DumpCheckedNumber THEN od.DriverPrice
 	END) AS DriverPrice2,
 	SUM(CASE f.FlowNumber
-		WHEN 0 THEN ec.Cost
+		WHEN @DumpCheckedNumber THEN ec.Cost
 	END) AS ExtraCost2
 FROM TransportManage.dbo.DeliveryTaskView v
 INNER JOIN TransportManage..OrderDetail od
@@ -487,7 +502,7 @@ INNER JOIN TransportManage..Flow f
 WHERE od.WorkSiteId IN (SELECT
 	temp.WorkSiteId
 FROM @Temp temp)
-AND (f.Name = '完成运输' OR f.Name = '完成审核') /* condition */
+AND (f.Name = '消纳审核' OR f.Name = '完成审核') /* condition */
 GROUP BY	k.Name,
 			s.Name,
 			od.WorkSiteId";
@@ -844,13 +859,9 @@ INSERT TransportManage..Department (Name, Parentid,CompanyId)
 	VALUES (@Name, @Parentid,@CompanyId)
 end";
         public const string GetAllDriver = @"SELECT
-	e.Name
+	DISTINCT e.Name
 FROM TransportManage..Employee e
-INNER JOIN TransportManage..EmployeeCorelation ec
-	ON e.Id = ec.EmployeeId
-INNER JOIN TransportManage..Department d
-	ON d.Id = ec.DepartmentId
-WHERE  d.CompanyId=@companyId
+WHERE  e.CompanyId=2
 ORDER BY e.Name";
         public const string GetAllVehicleNumber = @"SELECT
 	c.PlateNumber
@@ -894,9 +905,9 @@ INNER JOIN TransportManage.dbo.ShareGroupDetail sgd
 WHERE e.Id = @EmployeeId)";
 
         public const string GetShortcutDetailSql = @"SELECT
-    v.LoadingRemark,
-    v.UnloadingRemark,
-    v.IsExistEvidence,
+	v.LoadingRemark,
+	v.UnloadingRemark,
+	v.IsExistEvidence,
 	v.LoadingTaskId,
 	v.UnloadingTaskId,
 	v.TaskId,
@@ -925,9 +936,16 @@ WHERE e.Id = @EmployeeId)";
 FROM TransportManage.dbo.DeliveryTaskView v
 INNER JOIN TransportManage.dbo.OrderDetail od
 	ON od.Id = v.OrderDetailId
-	LEFT JOIN TransportManage.dbo.WorkSite w on w.Id=od.WorkSiteId
-	LEFT JOIN TransportManage.dbo.KillMudstoneSite k ON k.Id=od.KillMudstoneSiteId
-WHERE v.DriverName LIKE @DriverName AND w.Name LIKE @Worksite AND v.PlateNumber LIKE @PlateNumber AND  k.Name LIKE @Dump AND v.CompleteTime BETWEEN @startTime AND @endTime AND v.TaskStatus = @taskStatus AND v.CompanyId=@companyId
+INNER JOIN TransportManage..CheckedTask ct
+	ON ct.TaskId = v.TaskId
+INNER JOIN TransportManage..Flow f
+	ON f.FlowNumber = ct.FlowNumber
+LEFT JOIN TransportManage.dbo.WorkSite w
+	ON w.Id = od.WorkSiteId
+LEFT JOIN TransportManage.dbo.KillMudstoneSite k
+	ON k.Id = od.KillMudstoneSiteId
+
+WHERE v.DriverName LIKE @DriverName AND w.Name LIKE @Worksite AND v.PlateNumber LIKE @PlateNumber AND k.Name LIKE @Dump AND v.CompleteTime BETWEEN @startTime AND @endTime AND ct.FlowNumber = @flowNumber AND v.CompanyId = @companyId
 ORDER BY v.CompleteTime DESC;";
         public const string GetAllWorksiteId = @"SELECT
 	w.Id,
@@ -1138,14 +1156,14 @@ FROM @Dialogue d)
 	t.TaskStatus
 FROM TransportManage.dbo.DeliveryTask t
 WHERE t.TaskNumber IN @taskNumList";
-        public const string GetDriverFinishOrder2 = @"SELECT
+        public const string GetDriverFinishOrder2 = @"SELECT TOP 1000
 	*,
 	od.WorkPrice,
 	od.KillSitePrice AS DumpPrice,
 	s.Name AS SoilType,
 	t.LoadingAddress,
 	t.UnloadingAddress,
-	ec.Cost AS ExtraCost
+	ec.Cost AS ExtraCost,f.Name as FlowName
 FROM TransportManage.dbo.DeliveryTaskView t
 INNER JOIN TransportManage.dbo.OrderDetail od
 	ON od.Id = t.OrderDetailId
@@ -1160,13 +1178,13 @@ WHERE (f.FlowNumber = @FlowNumber /*condition*/) AND t.DriverId = @DriverId AND 
 ORDER BY t.CreateTime DESC
 
 ";
-        public const string GetFinishOrder2 = @"SELECT
+        public const string GetFinishOrder2 = @"SELECT TOP 1000
 	*,
 	od.WorkPrice,
 	od.KillSitePrice AS DumpPrice,
 	s.Name AS SoilType,
 	t.LoadingAddress,
-	t.UnLoadingAddress
+	t.UnLoadingAddress,f.Name as FlowName
 FROM TransportManage.dbo.DeliveryTaskView t
 INNER JOIN TransportManage.dbo.OrderDetail od
 	ON od.Id = t.OrderDetailId
@@ -1275,7 +1293,7 @@ INSERT INTO @CompleteTaskTable
 	INNER JOIN TransportManage..CheckedTask ct
 		ON ct.TaskId = v.TaskId
 	INNER JOIN TransportManage..Flow f
-		ON f.Id = ct.FlowId
+		ON f.FlowNumber=ct.FlowNumber
 	WHERE v.TaskStatus = 2 AND v.CompanyId = @companyId AND f.Name = '消纳审核'
 	ORDER BY v.CompleteTime DESC
 
@@ -1353,14 +1371,13 @@ END";
 	e.CompanyId,
 	e.Tel,
 	e.Name,
-	App.dbo.Concatenate(a.Name, ';') AS AuthList
-FROM TransportManage..EmployeeCorelation ec
-inner JOIN TransportManage..Auth a on a.GroupId=ec.DepartmentId
-LEFT JOIN TransportManage..Employee e
+	App.dbo.Concatenate(d.Type, ';') AS AuthList
+FROM TransportManage..Department d
+INNER JOIN TransportManage..EmployeeCorelation ec
+	ON ec.DepartmentId = d.Id
+INNER JOIN TransportManage..Employee e
 	ON e.Id = ec.EmployeeId
-LEFT JOIN TransportManage..Department d
-	ON d.Id = ec.DepartmentId
-WHERE d.Type != '组织架构'  AND e.Name = @Name AND e.Password = @PassWord
+WHERE e.Name = @name AND e.Password = @PassWord AND d.Type LIKE '%权限'
 GROUP BY	e.Id,
 			e.CompanyId,
 			e.Tel,
@@ -1419,10 +1436,12 @@ CASE
 FROM TransportManage.dbo.DeliveryTaskView v
 INNER JOIN TransportManage.dbo.OrderDetail od
 	ON od.Id = v.OrderDetailId
+	inner join TransportManage..CheckedTask ct on ct.TaskId=v.TaskId
+	INNER join TransportManage..Flow f on f.FlowNumber=ct.FlowNumber
 WHERE ((@type = 0 AND v.DriverId = @id) OR
 (@type = 1 AND od.WorkSiteId = @id) OR
 (@type = 2 AND od.KillMudstoneSiteId = @id)
-) AND v.CompleteTime BETWEEN @startTime AND @endTime  AND v.TaskStatus = @taskStatus AND v.CompanyId=@companyId
+) AND v.CompleteTime BETWEEN @startTime AND @endTime  AND f.FlowNumber = @flowNumber AND v.CompanyId=@companyId
 ORDER BY v.CompleteTime DESC;";
         public const string GetOrderDetail = @"SELECT
 	o.Id,
@@ -1474,8 +1493,7 @@ ORDER BY od.Id)
 t
 WHERE o.CompanyId = @companyId /*condition*/
 ORDER BY o.CreateTime DESC";
-        public const string GetDumpResult = @"
-SELECT
+        public const string GetDumpResult = @"SELECT
 	kms.Id,
 	kms.Name,
 	SUM(t.KillSitePrice) AS Price,
@@ -1493,8 +1511,8 @@ INNER JOIN TransportManage.dbo.[Order] o
 INNER JOIN TransportManage..CheckedTask ct
 	ON ct.TaskId = dt.Id
 INNER JOIN TransportManage..Flow f
-	ON f.Id = ct.FlowId
-WHERE f.Name = '完成审核' AND dt.TaskStatus = @taskStatus /*condition*/ AND dt.CompleteTime BETWEEN @startTime AND @endTime
+	ON f.FlowNumber=ct.FlowNumber
+WHERE ct.FlowNumber = @flowNumber /*condition*/ AND dt.CompleteTime BETWEEN @startTime AND @endTime
 GROUP BY	dt.Id,
 			od.KillMudstoneSiteId,
 			od.KillSitePrice)
@@ -1559,8 +1577,8 @@ INNER JOIN TransportManage.dbo.DriverCar dc
 INNER JOIN TransportManage..CheckedTask ct
 	ON ct.TaskId = dt.Id
 INNER JOIN TransportManage..Flow f
-	ON f.Id = ct.FlowId
-WHERE f.Name = '完成审核' AND dt.TaskStatus = @taskStatus /*condition*/ AND dt.CompleteTime BETWEEN @startTime AND @endTime)
+	ON f.FlowNumber=ct.FlowNumber
+WHERE  ct.FlowNumber= @FlowNumber /*condition*/ AND dt.CompleteTime BETWEEN @startTime AND @endTime)
 t
 	ON d.Id = t.EmployeeId
 WHERE d.Id IN @id
@@ -1654,7 +1672,7 @@ INNER JOIN TransportManage..Department d
 	ON d.Id = ec.DepartmentId
 INNER JOIN TransportManage..ResourceAuthorization ra
 	ON ra.DepartmentId = d.Id
-WHERE ra.Type = '指派' AND ec.EmployeeId = @EmployeeId) > 0)
+WHERE ra.Type = '指派资源' AND ec.EmployeeId = @EmployeeId) > 0)
 
 begin
 SELECT
@@ -1667,7 +1685,7 @@ INNER JOIN TransportManage..Department d
 	ON d.Id = ec.DepartmentId
 INNER JOIN TransportManage..ResourceAuthorization ra
 	ON ra.DepartmentId = d.Id
-WHERE ra.Type = '指派' AND ec.EmployeeId = 2)
+WHERE ra.Type = '指派资源' AND ec.EmployeeId = 2)
 end
 else
 BEGIN
@@ -1677,7 +1695,7 @@ FROM @OrderInfo o
 WHERE o.WorkSiteId NOT IN (SELECT
 	ra.SiteId
 FROM TransportManage..ResourceAuthorization ra
-WHERE ra.Type = '指派')
+WHERE ra.Type = '指派资源')
 end;
 
 SELECT

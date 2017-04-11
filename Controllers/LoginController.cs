@@ -68,7 +68,7 @@ namespace TransportManage.Controllers
                     return userTypeArray.ConvertAll(d =>
                     new AuthData()
                     {
-                        Auth = d,
+                        Auth = d.Remove(2, 2),
                         Token = (Type + "\n" + Id + "\n" + d + "\n" + CompanyId + "\n" + DateTime.Now.ToString()).Encode()//分别为登陆类型，登陆Id，登陆用户权限，公司ID，时间戳
                     }
                     );

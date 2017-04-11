@@ -29,6 +29,7 @@ namespace TransportManage
         [HttpGet, Route("GetDriver")]
         public object GetDriver(string token, int taskStatus, string driverName, DateTime? startTime, DateTime? endTime)
         {
+
             if (startTime == null)
             {
                 return ApiResult.Create(false, "起始时间不能为空");
@@ -42,6 +43,7 @@ namespace TransportManage
             {
                 var employeeId = Convert.ToInt32(Request.Properties["Id"]);
                 var companyId = Request.Properties["CompanyId"];
+                taskStatus = taskStatus == 2 ? c.SelectScalar<int>(Sql.GetDumpCheckNumber, new { }) : c.SelectScalar<int>(Sql.GetCheckedFlowMaxNumber, new { });
 
                 if (userInfo.IsBoss)
                 {
@@ -58,7 +60,7 @@ namespace TransportManage
                             return ApiResult.Create(false, "关于此名称没有相应的数据");
                         }
                         driverId = selectResult.Result;
-                        var DriverInfo = c.Query<DriverResult>(Sql.GetDriverStatistics, new { id = driverId, startTime, endTime = endTime.Value.AddDays(1).AddSeconds(-1), taskStatus }).AsList();
+                        var DriverInfo = c.Query<DriverResult>(Sql.GetDriverStatistics, new { id = driverId, startTime, endTime = endTime.Value.AddDays(1).AddSeconds(-1), flowNumber = taskStatus }).AsList();
                         return ApiResult.Create(true, new
                         {
                             AllPrice = DriverInfo.Sum(d => d.Price),
@@ -69,7 +71,7 @@ namespace TransportManage
                         });
                     }
 
-                    var driverResult = c.Query<DriverResult>(Sql.GetDriverStatistics, new { id = driverId, startTime, endTime = endTime.Value.AddDays(1).AddSeconds(-1), taskStatus }).AsList();
+                    var driverResult = c.Query<DriverResult>(Sql.GetDriverStatistics, new { id = driverId, startTime, endTime = endTime.Value.AddDays(1).AddSeconds(-1), flowNumber = taskStatus }).AsList();
 
                     return ApiResult.Create(true, new
                     {
@@ -87,7 +89,7 @@ namespace TransportManage
                     if (string.IsNullOrWhiteSpace(driverName))
                     {
 
-                        var DriverInfo = c.Query<DriverResult>(Sql.GetDriverStatistics.Replace("condition", Sql.GetAdminStaticCondition), new { id = adminDriverId, startTime, endTime = endTime.Value.AddDays(1).AddSeconds(-1), taskStatus, Employee = Convert.ToInt32(Request.Properties["Id"]) }).AsList();
+                        var DriverInfo = c.Query<DriverResult>(Sql.GetDriverStatistics.Replace("condition", Sql.GetAdminStaticCondition), new { id = adminDriverId, startTime, endTime = endTime.Value.AddDays(1).AddSeconds(-1), flowNuber = taskStatus, Employee = Convert.ToInt32(Request.Properties["Id"]) }).AsList();
                         return ApiResult.Create(true, new
                         {
                             AllPrice = DriverInfo.Sum(d => d.Price),
@@ -106,7 +108,7 @@ namespace TransportManage
                         }
                         var cr = (List<int>)selectResult.Result;
                         var id = adminDriverId.Intersect(cr);
-                        var DriverInfo = c.Query<DriverResult>(Sql.GetDriverStatistics.Replace("condition", Sql.GetAdminStaticCondition), new { id, startTime, endTime = endTime.Value.Date.AddDays(1).AddSeconds(-1), taskStatus, Employee = Convert.ToInt32(Request.Properties["Id"]) }).AsList();
+                        var DriverInfo = c.Query<DriverResult>(Sql.GetDriverStatistics.Replace("condition", Sql.GetAdminStaticCondition), new { id, startTime, endTime = endTime.Value.Date.AddDays(1).AddSeconds(-1), flowNumber = taskStatus, Employee = Convert.ToInt32(Request.Properties["Id"]) }).AsList();
 
                         return ApiResult.Create(true, new
                         {
@@ -151,7 +153,8 @@ namespace TransportManage
             {
                 var companyId = Convert.ToInt32(Request.Properties["CompanyId"]);
                 var employeeId = Request.Properties["Id"];
-                taskStatus = taskStatus == 0 ? taskStatus : c.SelectScalar<int>(Sql.GetCheckedFlowMaxNumber, new { });
+                taskStatus = taskStatus == 2 ? c.SelectScalar<int>(Sql.GetDumpCheckNumber, new { }) : c.SelectScalar<int>(Sql.GetCheckedFlowMaxNumber, new { });
+
 
                 if (userInfo.IsBoss)
                 {
@@ -169,7 +172,7 @@ namespace TransportManage
                             ApiResult.Create(false, "关于此名称没有相应的数据");
                         }
                         id = selectResult.Result;
-                        var WorkSiteInfo = c.Query<WorkSiteResult>(Sql.GetWorkSiteStatistics, new { id, startTime, EndTime = endTime.Value.AddDays(1).AddSeconds(-1), taskStatus }).AsList();
+                        var WorkSiteInfo = c.Query<WorkSiteResult>(Sql.GetWorkSiteStatistics, new { id, startTime, EndTime = endTime.Value.AddDays(1).AddSeconds(-1), flowNumber = taskStatus }).AsList();
                         return ApiResult.Create(true, new
                         {
                             AllPrice = WorkSiteInfo.Sum(d => d.Price),
@@ -273,6 +276,8 @@ namespace TransportManage
             {
                 var companyId = Convert.ToInt32(Request.Properties["CompanyId"]);
                 var employeeId = Convert.ToInt32(Request.Properties["Id"]);
+                taskStatus = taskStatus == 2 ? c.SelectScalar<int>(Sql.GetDumpCheckNumber, new { }) : c.SelectScalar<int>(Sql.GetCheckedFlowMaxNumber, new { });
+
                 if (userInfo.IsBoss)
                 {
                     var id = new List<int>();
@@ -288,7 +293,7 @@ namespace TransportManage
                             return ApiResult.Create(false, "关于此名称没有相应的数据");
                         }
                         id = selectResult.Result;
-                        var dumpInfo = c.Query<DumpResult>(Sql.GetDumpResult, new { id, startTime, EndTime = endTime.Value.AddDays(1).AddSeconds(-1), taskStatus, employeeId }).AsList();
+                        var dumpInfo = c.Query<DumpResult>(Sql.GetDumpResult, new { id, startTime, EndTime = endTime.Value.AddDays(1).AddSeconds(-1), flowNumber = taskStatus, employeeId }).AsList();
                         return ApiResult.Create(true, new
                         {
                             AllPrice = dumpInfo.Sum(d => d.Price),
@@ -298,7 +303,7 @@ namespace TransportManage
                             Detail = dumpInfo
                         });
                     }
-                    var dumpResult = c.Query<DumpResult>(Sql.GetDumpResult, new { id, startTime, EndTime = endTime.Value.AddDays(1).AddSeconds(-1), taskStatus, employeeId }).AsList();
+                    var dumpResult = c.Query<DumpResult>(Sql.GetDumpResult, new { id, startTime, EndTime = endTime.Value.AddDays(1).AddSeconds(-1), flowNumber = taskStatus, employeeId }).AsList();
 
                     return ApiResult.Create(true, new
                     {
@@ -314,7 +319,7 @@ namespace TransportManage
                     var adminDumpId = c.Query<int>(Sql.GetAdminDump, new { employeeId, companyId }).AsList();
                     if (string.IsNullOrWhiteSpace(killSite))
                     {
-                        var dumpResult = c.Query<DumpResult>(Sql.GetDumpResult, new { id = adminDumpId, startTime, EndTime = endTime.Value.AddDays(1).AddSeconds(-1), taskStatus }).AsList();
+                        var dumpResult = c.Query<DumpResult>(Sql.GetDumpResult, new { id = adminDumpId, startTime, EndTime = endTime.Value.AddDays(1).AddSeconds(-1), flowNuber = taskStatus }).AsList();
 
                         return ApiResult.Create(true, new
                         {
@@ -336,7 +341,7 @@ namespace TransportManage
                         var id = adminDumpId.Intersect(cr);
                         if (id.Count() != 0)
                         {
-                            var dumpInfo = c.Query<DumpResult>(Sql.GetDumpResult, new { id, startTime, EndTime = endTime.Value.AddDays(1).AddSeconds(-1), taskStatus, EmployeeId = Convert.ToInt32(Request.Properties["Id"]) }).AsList();
+                            var dumpInfo = c.Query<DumpResult>(Sql.GetDumpResult, new { id, startTime, EndTime = endTime.Value.AddDays(1).AddSeconds(-1), flowNumber = taskStatus, EmployeeId = Convert.ToInt32(Request.Properties["Id"]) }).AsList();
                             return ApiResult.Create(true, new
                             {
                                 AllPrice = dumpInfo.Sum(d => d.Price),
@@ -413,14 +418,7 @@ namespace TransportManage
             }
         }
 
-        private class OrderResultData
-        {
-            public string Name { get; set; }
-            public string PlateNumber { get; set; }
-            public string SoilType { get; set; }
-            public double Price { get; set; }
-            public int TotalCount { get; set; }
-        }
+
 
 
         /// <summary>
@@ -451,8 +449,10 @@ namespace TransportManage
             }
             using (var c = AppDb.CreateConnection(AppDb.TransportManager))
             {
+                taskStatus = taskStatus == 2 ? c.SelectScalar<int>(Sql.GetDumpCheckNumber, new { }) : c.SelectScalar<int>(Sql.GetCheckedFlowMaxNumber, new { });
 
-                var r = c.Query<StatisticsDetail>(Sql.StatisticsDetail, new { startTime, endTime = endTime.Value.Date.AddDays(1).AddSeconds(-1), type = detailType, id, taskStatus, companyId = Request.Properties["CompanyId"] }).AsList();
+                //taskStatus = taskStatus == 2 ? c.SelectScalar<int>(Sql.GetDumpCheckNumber, new { }) : c.SelectScalar<int>(Sql.GetCheckedFlowMaxNumber, new { });
+                var r = c.Query<StatisticsDetail>(Sql.StatisticsDetail, new { startTime, endTime = endTime.Value.Date.AddDays(1).AddSeconds(-1), type = detailType, id, flowNumber = taskStatus, companyId = Request.Properties["CompanyId"] }).AsList();
 
                 var loadingTaskDetailIds = r.ConvertAll(d => d.LoadingTaskId);
                 using (var cmd = c.SetupCommand(Sql.GetTaskDetailPhoto, new { taskDetailId = loadingTaskDetailIds }))
@@ -491,79 +491,47 @@ namespace TransportManage
             {
                 return ApiResult.Create(false, "数据为空");
             }
-            //if (data.StartTime == null)
-            //{
-            //    return new ApiResult<dynamic>() { Status = false, Result = "开始时间不能为空" };
-
-            //}
-            //if (data.EndTime == null)
-            //{
-            //    return new ApiResult<dynamic>() { Status = false, Result = "结束时间不能为空" };
-
-            //}
-            //if (string.IsNullOrWhiteSpace(data.DriverName) && string.IsNullOrWhiteSpace(data.Dump) && string.IsNullOrWhiteSpace(data.Worksite))
-            //{
-            //    return new { Status = false, Result = "司机名称，工地名称和消纳场名称不能同时为空" };
-            //}
             using (var c = AppDb.CreateConnection(AppDb.TransportManager))
             {
+                data.TaskStatus = data.TaskStatus == 2 ? c.SelectScalar<int>(Sql.GetDumpCheckNumber, new { }) : c.SelectScalar<int>(Sql.GetCheckedFlowMaxNumber, new { });
+                if ((data.DriverName ?? data.Dump ?? data.PlateNumber ?? data.Worksite) == null && (data.StartTime ?? data.EndTime) == null && data.TaskStatus == 0)
+                {
+                    throw new ArgumentNullException("参数不能全为空");
+                }
 
-                //    if (string.IsNullOrWhiteSpace(data.Worksite))
-                //    {
-                //        data.Worksite = "%%";
-                //    }
-                //    else
-                //    {
-                //        data.Worksite = "%" + data.Worksite + "%";
-                //    }
-                //    if (string.IsNullOrWhiteSpace(data.Dump))
-                //    {
-                //        data.Dump = "%%";
-                //    }
-                //    else
-                //    {
-                //        data.Dump = "%" + data.Dump + "%";
-                //    }
-                //    if (string.IsNullOrWhiteSpace(data.DriverName))
-                //    {
-                //        data.DriverName = "%%";
-                //    }
-                //    else
-                //    {
-                //        data.Dump = "%" + data.Dump + "%";
-                //    }
-                //    if (string.IsNullOrWhiteSpace(data.PlateNumber))
-                //    {
-                //        data.PlateNumber = "%%";
-                //    }
-                //    else
-                //    {
-                //        data.PlateNumber = "%" + data.PlateNumber + "%";
-                //    }
-                //    var r = c.Query<StatisticsDetail>(Sql.GetShortcutDetailSql, new { data.StartTime, data.PlateNumber, EndTime = data.EndTime.Value.Date.AddDays(1).AddSeconds(-1), data.DriverName, data.Dump, data.Worksite, data.TaskStatus, companyId = Request.Properties["CompanyId"] }).AsList();
+                data.Worksite = "%" + data.Worksite;
+                data.Dump = "%" + data.Dump;
+                data.DriverName = "%" + data.DriverName;
+                data.PlateNumber = "%" + data.PlateNumber;
+                var ss = data.StartTime ?? new DateTime(2000, 1, 1);
+                var ee = (data.EndTime ?? System.DateTime.Now).Date.AddDays(1).AddSeconds(-1);
+                var r = c.Select<StatisticsController.StatisticsDetail>(Sql.GetShortcutDetailSql, new { StartTime = data.StartTime ?? Convert.ToDateTime("2000/1/1"), data.PlateNumber, EndTime = (data.EndTime ?? System.DateTime.Now).Date.AddDays(1).AddSeconds(-1), data.DriverName, data.Dump, data.Worksite, flowNumber = data.TaskStatus, CompanyId = Convert.ToInt32(Request.Properties["CompanyId"]) });
 
-                //    var loadingTaskDetailIds = r.ConvertAll(d => d.LoadingTaskId);
-                //    using (var cmd = c.SetupCommand(Sql.GetTaskDetailPhoto, new { taskDetailId = loadingTaskDetailIds }))
-                //    using (var imgReader = cmd.ExecuteReader())
-                //    {
-                //        imgReader.JoinEntities(r, d => d.LoadingImages, m => m.LoadingTaskId, "TaskDetailId");
-                //    }
-                //    var unloadingTaskDetailIds = r.ConvertAll(i => i.UnloadingTaskId);
-                //    using (var cmd = c.SetupCommand(Sql.GetTaskDetailPhoto, new { taskDetailId = unloadingTaskDetailIds }))
-                //    using (var imgReader = cmd.ExecuteReader())
-                //    {
-                //        imgReader.JoinEntities(r, d => d.UnloadingImages, m => m.UnloadingTaskId, "TaskDetailId");
-                //    }
+                //MethodHelp.GetCompleteTaskDetail(r, 100, 100, c);
+                var temp = r.Where(d =>
+                {
+                    return d.LoadingTaskId != 0;
+                });
+                var loadingTaskDetailIds = temp.ConvertAll(d => d.LoadingTaskId);
+                using (var cmd = c.SetupCommand(Sql.GetTaskDetailPhoto, new { taskDetailId = loadingTaskDetailIds }))
+                using (var imgReader = cmd.ExecuteReader())
+                {
+                    imgReader.JoinEntities(temp, d => d.LoadingImages, m => m.LoadingTaskId, "TaskDetailId");
+                }
+                var unloadingTaskDetailIds = temp.ConvertAll(i => i.UnloadingTaskId);
+                using (var cmd = c.SetupCommand(Sql.GetTaskDetailPhoto, new { taskDetailId = unloadingTaskDetailIds }))
+                using (var imgReader = cmd.ExecuteReader())
+                {
+                    imgReader.JoinEntities(temp, d => d.UnloadingImages, m => m.UnloadingTaskId, "TaskDetailId");
+                }
 
-                //    foreach (var item in r)
-                //    {
-                //        if (item.ExtraCost != 0)
-                //        {
-                //            item.IsExists = true;
-                //        }
-                //    }
-                //    return new { Status = true, Message = "查询类型为:快速查询", Result = r };
-                var r = MethodHelp.FuzzySearching(c, data, Convert.ToInt32(Request.Properties["CompanyId"]));
+                foreach (var item in r)
+                {
+                    if (item.ExtraCost != 0)
+                    {
+                        item.IsExists = true;
+                    }
+                }
                 return ApiResult.Create(true, r);
             }
 
@@ -583,22 +551,24 @@ namespace TransportManage
             {
 
                 string sql;
+                var maxNumber = c.SelectScalar<int>(Sql.GetCheckedFlowMaxNumber, new { });
+                var DumpCheckedNumber = c.SelectScalar<int>(Sql.GetDumpCheckNumber, new { });
 
                 if ((startTime ?? endTime) == null)
                 {
-                    sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", " AND v.DriverId = @Id AND v.LoadingTime is NULL AND (v.TaskStatus=2 or v.TaskStatus=4) ");
+                    sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", " AND v.DriverId = @Id AND v.LoadingTime is NULL AND (f.Name = '完成运输' OR f.Name = '完成审核') ");
                 }
                 else if (endTime != null & startTime != null)
                 {
-                    sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", "AND v.DriverId = @Id AND v.LoadingTime >=@StartTime AND  v.UnloadingTime<=@EndTime  OR (v.DriverId=@Id AND v.LoadingTime is NULL AND v.LoadingTime is NULL AND (v.TaskStatus=2 or v.TaskStatus=4))");
+                    sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", "AND v.DriverId = @Id AND v.LoadingTime >=@StartTime AND  v.UnloadingTime<=@EndTime  OR (v.DriverId=@Id AND v.LoadingTime is NULL AND v.LoadingTime is NULL AND (f.Name = '完成运输' OR f.Name = '完成审核'))");
                 }
                 else if (startTime != null)
                 {
-                    sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", "AND v.DriverId = @Id  AND v.LoadingTime >=@StartTime  OR (v.DriverId=@Id AND v.LoadingTime is NULL AND v.LoadingTime is NULL AND (v.TaskStatus=2 or v.TaskStatus=4))");
+                    sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", "AND v.DriverId = @Id  AND v.LoadingTime >=@StartTime  OR (v.DriverId=@Id AND v.LoadingTime is NULL AND v.LoadingTime is NULL AND (f.Name = '完成运输' OR f.Name = '完成审核'))");
                 }
                 else if (endTime != null)
                 {
-                    sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", "AND v.DriverId = @Id AND  v.UnloadingTime<=@EndTime  OR (v.DriverId=@Id AND v.LoadingTime is NULL AND v.LoadingTime is NULL AND (v.TaskStatus=2 or v.TaskStatus=4))");
+                    sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", "AND v.DriverId = @Id AND  v.UnloadingTime<=@EndTime  OR (v.DriverId=@Id AND v.LoadingTime is NULL AND v.LoadingTime is NULL AND (f.Name = '完成运输' OR f.Name = '完成审核'))");
                 }
                 else
                 {
@@ -606,8 +576,7 @@ namespace TransportManage
                 }
 
                 var employeeId = Convert.ToInt32(Request.Properties["Id"]);
-                var maxNumber = c.SelectScalar<int>(Sql.GetCheckedFlowMaxNumber, new { });
-                var t = GetCompleteDetailMethord(startTime, endTime, c, maxNumber, sql, employeeId: employeeId);
+                var t = GetCompleteDetailMethord(startTime, endTime, c, maxNumber, DumpCheckedNumber, sql, employeeId: employeeId);
                 return ApiResult.Create(true, new
                 {
                     Price = t.Sum(d => d.DriverPrice + d.DriverPrice2),
@@ -661,17 +630,19 @@ namespace TransportManage
                     var companyId = Convert.ToInt32(Request.Properties["CompanyId"]);
                     var employeeId = Convert.ToInt32(Request.Properties["Id"]);
                     var maxNumber = c.SelectScalar<int>(Sql.GetCheckedFlowMaxNumber, new { });
+                    var DumpCheckedNumber = c.SelectScalar<int>(Sql.GetDumpCheckNumber, new { });
+
                     string sql;
                     if ((startTime ?? endTime) == null)
                     {
                         if (userInfo.IsBoss)
                         {
 
-                            sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", "AND v.CompanyId=@companyId AND v.LoadingTime is NULL AND (v.TaskStatus=2 or v.TaskStatus=4)");
+                            sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", "AND v.CompanyId=@companyId AND v.LoadingTime is NULL AND (f.Name='消纳审核' or f.Name='完成审核'))");
                         }
                         else
                         {
-                            sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", "AND w.Id IN (@workSiteId) AND v.CompanyId=@companyId AND v.LoadingTime is NULL AND (v.TaskStatus=2 or v.TaskStatus=4)");
+                            sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", "AND w.Id IN (@workSiteId) AND v.CompanyId=@companyId AND v.LoadingTime is NULL AND (f.Name='消纳审核' or f.Name='完成审核'))");
                         }
                     }
                     else if (endTime != null & startTime != null)
@@ -679,23 +650,23 @@ namespace TransportManage
                         if (userInfo.IsBoss)
                         {
 
-                            sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", "AND v.CompanyId = @companyId AND v.LoadingTime >=@StartTime AND  v.UnloadingTime<=@EndTime  OR (v.CompanyId=@CompanyId  AND v.LoadingTime is NULL AND (v.TaskStatus=2 or v.TaskStatus=4))");
+                            sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", "AND v.CompanyId = @companyId AND v.LoadingTime >=@StartTime AND  v.UnloadingTime<=@EndTime  OR (v.CompanyId=@CompanyId  AND v.LoadingTime is NULL AND (f.Name='消纳审核' or f.Name='完成审核'))");
                         }
                         else
                         {
-                            sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", "AND w.Id IN (@workSiteId) AND v.CompanyId = @companyId AND v.LoadingTime >=@StartTime AND  v.UnloadingTime<=@EndTime  OR (v.CompanyId=@CompanyId  AND v.LoadingTime is NULL AND (v.TaskStatus=2 or v.TaskStatus=4))");
+                            sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", "AND w.Id IN (@workSiteId) AND v.CompanyId = @companyId AND v.LoadingTime >=@StartTime AND  v.UnloadingTime<=@EndTime  OR (v.CompanyId=@CompanyId  AND v.LoadingTime is NULL AND (f.Name='消纳审核' or f.Name='完成审核'))");
                         }
                     }
                     else if (startTime != null)
                     {
                         if (userInfo.IsBoss)
                         {
-                            sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", "AND v.CompanyId = @CompanyId  AND v.LoadingTime >=@StartTime  OR (v.CompanyId=@CompanyId AND v.LoadingTime is NULL AND (v.TaskStatus=2 or v.TaskStatus=4))");
+                            sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", "AND v.CompanyId = @CompanyId  AND v.LoadingTime >=@StartTime  OR (v.CompanyId=@CompanyId AND v.LoadingTime is NULL AND (f.Name='消纳审核' or f.Name='完成审核'))");
 
                         }
                         else
                         {
-                            sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", "AND w.Id IN (@workSiteId) AND v.CompanyId = @CompanyId  AND v.LoadingTime >=@StartTime  OR (v.CompanyId=@CompanyId AND v.LoadingTime is NULL AND (v.TaskStatus=2 or v.TaskStatus=4))");
+                            sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", "AND w.Id IN (@workSiteId) AND v.CompanyId = @CompanyId  AND v.LoadingTime >=@StartTime  OR (v.CompanyId=@CompanyId AND v.LoadingTime is NULL AND (f.Name='消纳审核' or f.Name='完成审核'))");
                         }
                     }
                     else if (endTime != null)
@@ -703,18 +674,18 @@ namespace TransportManage
                         if (userInfo.IsBoss)
                         {
 
-                            sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", "AND v.CompanyId = @CompanyId AND  v.UnloadingTime<=@EndTime  OR (v.CompanyId=@CompanyId AND v.LoadingTime is NULL  AND (v.TaskStatus=2 or v.TaskStatus=4))");
+                            sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", "AND v.CompanyId = @CompanyId AND  v.UnloadingTime<=@EndTime  OR (v.CompanyId=@CompanyId AND v.LoadingTime is NULL  AND (f.Name='消纳审核' or f.Name='完成审核'))");
                         }
                         else
                         {
-                            sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", "AND w.Id IN (@workSiteId) AND v.CompanyId = @CompanyId AND  v.UnloadingTime<=@EndTime  OR (v.CompanyId=@CompanyId AND v.LoadingTime is NULL  AND (v.TaskStatus=2 or v.TaskStatus=4))");
+                            sql = Sql.GetCompleteTaskDetailSql.Replace("/* condition */", "AND w.Id IN (@workSiteId) AND v.CompanyId = @CompanyId AND  v.UnloadingTime<=@EndTime  OR (v.CompanyId=@CompanyId AND v.LoadingTime is NULL  AND (f.Name='消纳审核' or f.Name='完成审核'))");
                         }
                     }
                     else
                     {
                         throw new ArgumentNullException("时间参数异常");
                     }
-                    var t = GetCompleteDetailMethord(startTime, endTime, c, maxNumber, sql, employeeId: employeeId, companyId: companyId);
+                    var t = GetCompleteDetailMethord(startTime, endTime, c, maxNumber, DumpCheckedNumber, sql, employeeId: employeeId, companyId: companyId);
                     return t;
                 }
             }
@@ -745,11 +716,12 @@ namespace TransportManage
             }
             var r = new OrderController().GetCompleteTaskCarryTime(userInfo, companyId, employeeId, Convert.ToDateTime("2000/1/1"), DateTime.Now.Date, taskId: data);
 
+
             if (taskStatus == 2)
             {
                 //TODO 更正司机价格为应付司机价格，
                 //获取未审核的订单
-                var t = r.Data.Where(d => d.TaskStatus == 2);
+                var t = r.Data.Where(d => d.FlowName == "消纳审核");
                 var DriverPrice = t.Sum(d => d.DriverPrice);
                 var ExtraPrice = t.Sum(d => d.ExtraCost);
                 return ApiResult.Create(true, new
@@ -764,7 +736,7 @@ namespace TransportManage
             else if (taskStatus == 4)
             {
                 //获取已审核的订单
-                var t = r.Data.Where(d => d.TaskStatus == 4);
+                var t = r.Data.Where(d => d.FlowName == "完成审核");
                 return ApiResult.Create(true, new
                 {
                     DumpPrice = t.Sum(d => d.DumpPrice),
@@ -799,11 +771,11 @@ namespace TransportManage
         /// <param name="employeeId">用户Id</param>
         /// <param name="companyId">公司Id</param>
         /// <returns></returns>
-        protected List<DriverCompleteTask> GetCompleteDetailMethord(DateTime? startTime, DateTime? endTime, System.Data.SqlClient.SqlConnection c, int maxNumber, string sql, int employeeId = 0, int companyId = 0)
+        protected List<DriverCompleteTask> GetCompleteDetailMethord(DateTime? startTime, DateTime? endTime, System.Data.SqlClient.SqlConnection c, int maxNumber, int checkedDumpNumber, string sql, int employeeId = 0, int companyId = 0)
         {
             var adminworksiteId = c.Query<AdminController.DataList>(Sql.GetAdminWorksite, new { employeeId, id = companyId }).AsList();
 
-            using (var db = c.SetupCommand(sql, new { maxNumber, Id = employeeId, CompanyId = companyId, startTime, endTime, workSiteId = adminworksiteId.ConvertAll(d => d.Id) }))
+            using (var db = c.SetupCommand(sql, new { maxNumber, DumpCheckedNumber = checkedDumpNumber, Id = employeeId, CompanyId = companyId, startTime, endTime, workSiteId = adminworksiteId.ConvertAll(d => d.Id) }))
             using (var dbReader = db.ExecuteReader(System.Data.CommandBehavior.CloseConnection))
             {
                 var t = dbReader.ToEntities<DriverCompleteTask>();
@@ -816,6 +788,14 @@ namespace TransportManage
 
 
 
+        private class OrderResultData
+        {
+            public string Name { get; set; }
+            public string PlateNumber { get; set; }
+            public string SoilType { get; set; }
+            public double Price { get; set; }
+            public int TotalCount { get; set; }
+        }
         public class DriverCompleteTask
         {
             [JsonIgnore]
@@ -848,7 +828,14 @@ namespace TransportManage
             public string Dump { get; set; }
             public string SoilType { get; set; }
             [JsonIgnore]
-            public string TaskIdList { get; set; }
+            public string Tas private class OrderResultData
+        {
+            public string Name { get; set; }
+            public string PlateNumber { get; set; }
+            public string SoilType { get; set; }
+            public double Price { get; set; }
+            public int TotalCount { get; set; }
+        }kIdList { get; set; }
             public string[] TaskId
             {
                 get
@@ -1048,3 +1035,5 @@ namespace TransportManage
         }
     }
 }
+
+
