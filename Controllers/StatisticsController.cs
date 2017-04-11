@@ -823,19 +823,14 @@ namespace TransportManage
             public List<DriverCompleteTaskDetail> DriverDetail { get; set; } = new List<DriverCompleteTaskDetail>();
 
         }
+       
+      
         public class DriverCompleteTaskDetail
         {
             public string Dump { get; set; }
             public string SoilType { get; set; }
             [JsonIgnore]
-            public string Tas private class OrderResultData
-        {
-            public string Name { get; set; }
-            public string PlateNumber { get; set; }
-            public string SoilType { get; set; }
-            public double Price { get; set; }
-            public int TotalCount { get; set; }
-        }kIdList { get; set; }
+            public string TaskIdList { get; set; }
             public string[] TaskId
             {
                 get
